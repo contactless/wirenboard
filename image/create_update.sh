@@ -65,7 +65,9 @@ dtb_get_compatible() {
 }
 
 if [[ -d "$ROOTFS" ]]; then
-	DTB=$ROOTFS/`sed -n 's/^fdt_file=//p' $ROOTFS/boot/uEnv.txt`
+	DTB_DIR=$ROOTFS/boot/dtbs
+	[[ -h "$DTB_DIR" ]] && DTB_DIR="$ROOTFS/$(readlink $DTB_DIR)"
+	DTB=$DTB_DIR/`sed -n 's/^fdt_file=\/boot\/dtbs\///p' $ROOTFS/boot/uEnv.txt`
 	[[ -e "$DTB" ]] || die "Unable to get DTB path"
 	COMPATIBLE=`cat "$DTB" | dtb_get_compatible`
 	ROOTFS_TARBALL=`create_tarball $ROOTFS`
