@@ -1,3 +1,9 @@
+wb-test-suite (1.10.1) stable; urgency=medium
+
+  * fix ModRTC test
+
+ -- Evgeny Boger <boger@contactless.ru>  Fri, 13 Jan 2017 12:51:52 +0300
+
 wb-test-suite (1.10) stable; urgency=medium
 
   * add test for 2nd ethernet

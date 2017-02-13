@@ -10,7 +10,7 @@ from wb_common.gpio import GPIO
 
 
 class TestModGSMRTC(unittest.TestCase):
-    rtc_root = "/sys/class/rtc/rtc0"
+    rtc_root = "/sys/class/rtc/rtc1"
     GSM_POWER_GPIO = 17
 
     @staticmethod

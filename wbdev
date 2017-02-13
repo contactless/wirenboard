@@ -30,17 +30,17 @@ jessie-armel|jessie-armhf)
 esac
 
 IMAGE=${WBDEV_IMAGE:-contactless/devenv}
-
-echo $IMAGE $ROOTFS_DIR $TARGET_ARCH
+PREFIX="$HOME/wbdev/go/src/github.com/contactless"
 
 docker run $DOCKER_TTY_OPTS --privileged --rm \
        -e DEV_UID=$UID \
        -e DEV_USER=$USER \
-       -e DEV_DIR="$PWD" \
+       -e DEV_DIR="$PREFIX/${PWD##*/}" \
        -e DEV_TERM="$TERM" \
        -e ROOTFS_DIR="$ROOTFS_DIR" \
        -e TARGET_ARCH="$TARGET_ARCH" \
        -v $HOME:$HOME \
+       -v ${PWD%/*}:$PREFIX \
        $ssh_opts \
        -h wbdevenv \
        $IMAGE \
