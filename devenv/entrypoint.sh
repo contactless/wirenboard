@@ -28,6 +28,7 @@ DEV_GROUP="${DEV_GROUP:-$DEV_USER}"
 DEV_DIR="${DEV_DIR:-}"
 ROOTFS_DIR=${ROOTFS_DIR:-"/rootfs/wheezy-armel"}
 TARGET_ARCH=${TARGET_ARCH:-armel}
+INSTALL_DEPS=${INSTALL_DEPS:-no}
 
 export WORKSPACE_DIR="/home/$DEV_USER/wbdev"
 export GOPATH="$WORKSPACE_DIR"/go
@@ -69,6 +70,10 @@ devsudo () {
 
 chu () {
     devsudo proot -R $ROOTFS_DIR -q qemu-arm-static $shell_cmd "$@"
+}
+
+chr () {
+    proot -R $ROOTFS_DIR -q qemu-arm-static -b "/home/$DEV_USER:/home/$DEV_USER" $shell_cmd "$@"
 }
 
 loadprojects() {
@@ -123,7 +128,10 @@ case "$cmd" in
         fi
         ;;
     ndeb)
-        mk-build-deps -ir
+        if [ "$INSTALL_DEPS" = "yes" ]; then
+            apt-get update
+            mk-build-deps -ir -t "apt-get --force-yes -y"
+        fi
         devsudo dpkg-buildpackage -us -uc "$@"
         ;;
     gdeb)
@@ -137,7 +145,10 @@ case "$cmd" in
         esac
         ;;
     hmake)
-        mk-build-deps -ir
+        if [ "$INSTALL_DEPS" = "yes" ]; then
+            apt-get update
+            mk-build-deps -ir -t "apt-get --force-yes -y"
+        fi
         devsudo make "$@"
         ;;
     root)
@@ -147,15 +158,21 @@ case "$cmd" in
         chu "$@"
         ;;
     make)
-        proot -R $ROOTFS_DIR -q qemu-arm-static -b "/home/$DEV_USER:/home/$DEV_USER" mk-build-deps -ir
+        if [ "$INSTALL_DEPS" = "yes" ]; then
+            chr apt-get update
+            chr mk-build-deps -ir -t "apt-get --force-yes -y"
+        fi
         chu make "$@"
         ;;
     cdeb)
-        proot -R $ROOTFS_DIR -q qemu-arm-static -b "/home/$DEV_USER:/home/$DEV_USER" mk-build-deps -ir
+        if [ "$INSTALL_DEPS" = "yes" ]; then
+            chr apt-get update
+            chr mk-build-deps -ir -t "apt-get --force-yes -y"
+        fi
         chu dpkg-buildpackage -us -uc "$@"
         ;;
     chroot)
-        proot -R $ROOTFS_DIR -q qemu-arm-static -b "/home/$DEV_USER:/home/$DEV_USER" $shell_cmd "$@"
+        chr "$@"
         ;;
     update-workspace)
         update_workspace

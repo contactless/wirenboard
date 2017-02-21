@@ -32,6 +32,8 @@ esac
 IMAGE=${WBDEV_IMAGE:-contactless/devenv}
 PREFIX="$HOME/wbdev/go/src/github.com/contactless"
 
+INSTALL_DEPS=${WBDEV_INSTALL_DEPS:-no}
+
 docker run $DOCKER_TTY_OPTS --privileged --rm \
        -e DEV_UID=$UID \
        -e DEV_USER=$USER \
@@ -39,6 +41,7 @@ docker run $DOCKER_TTY_OPTS --privileged --rm \
        -e DEV_TERM="$TERM" \
        -e ROOTFS_DIR="$ROOTFS_DIR" \
        -e TARGET_ARCH="$TARGET_ARCH" \
+       -e INSTALL_DEPS="$INSTALL_DEPS" \
        -v $HOME:$HOME \
        -v ${PWD%/*}:$PREFIX \
        $ssh_opts \
