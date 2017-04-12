@@ -25,12 +25,20 @@ jessie-armel|jessie-armhf)
     exit 1
     ;;
 *)
-    echo "Warning: WBDEV_TARGET is not set, defaulting to armel"
+    echo "Warning: WBDEV_TARGET is not set, defaulting to wheezy-armel"
     ;;
 esac
 
 IMAGE=${WBDEV_IMAGE:-contactless/devenv}
-PREFIX="$HOME/wbdev/go/src/github.com/contactless"
+
+if [[ $OSTYPE == darwin* ]]
+then
+	VM_HOME="/home/$USER"
+else
+	VM_HOME=$HOME
+fi
+
+PREFIX="$VM_HOME/wbdev/go/src/github.com/contactless"
 
 INSTALL_DEPS=${WBDEV_INSTALL_DEPS:-no}
 
@@ -42,7 +50,7 @@ docker run $DOCKER_TTY_OPTS --privileged --rm \
        -e ROOTFS_DIR="$ROOTFS_DIR" \
        -e TARGET_ARCH="$TARGET_ARCH" \
        -e INSTALL_DEPS="$INSTALL_DEPS" \
-       -v $HOME:$HOME \
+       -v $HOME:$VM_HOME \
        -v ${PWD%/*}:$PREFIX \
        $ssh_opts \
        -h wbdevenv \

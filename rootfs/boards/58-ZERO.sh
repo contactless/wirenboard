@@ -17,4 +17,9 @@ board_install() {
 	done
 
 	json_edit '.slots|=map(if .id=="wb55-gsm" then .module="wb56-mod-rtc" else . end)'
+	json_edit '.slots|=map(if .id=="wb5-eth" then .module="" else . end)'
+
+	# disable 1-wire drivers to prevent floating pin from picking noise
+
+	echo "blacklist w1_gpio" > ${OUTPUT}/etc/modprobe.d/wirenboard-zero-w1.conf
 }

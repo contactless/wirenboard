@@ -1,5 +1,0 @@
-dependencies
-gspread https://github.com/burnash/gspread
-gammu (apt-get install gammu)
-https://github.com/google/oauth2client
-apt-get install python-setuptools python-httplib2 python-crypto
