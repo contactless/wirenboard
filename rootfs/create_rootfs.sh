@@ -194,6 +194,8 @@ echo "Creating /mnt/data mountpoint"
 mkdir ${OUTPUT}/mnt/data
 
 echo "Install packages from contactless repo"
+chr_apt --force-yes linux-image-${KERNEL_FLAVOUR} device-tree-compiler
+
 pkgs="cmux hubpower python-wb-io modbus-utils wb-configs serial-tool busybox-syslogd"
 pkgs+=" libnfc5 libnfc-bin libnfc-examples libnfc-pn53x-examples"
 
@@ -210,7 +212,6 @@ chr mv /etc/apt/sources.list.d/local.list /etc/apt/sources.list.d/contactless.li
 service mosquitto stop || /bin/true
 
 chr /etc/init.d/mosquitto start
-chr_apt --force-yes linux-image-${KERNEL_FLAVOUR} device-tree-compiler
 chr_apt --force-yes wb-mqtt-confed
 
 date '+%Y%m%d%H%M' > ${OUTPUT}/etc/wb-fw-version
