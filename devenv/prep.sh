@@ -1,7 +1,7 @@
 #!/bin/bash
 set -u -e
 
-ROOTFS_DIR=${ROOTFS_DIR:-"/rootfs"}
+ROOTFS_DIR=${ROOTFS:-"/rootfs"}
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 . "$SCRIPT_DIR"/rootfs/rootfs_env.sh
