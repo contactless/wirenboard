@@ -2,9 +2,13 @@
 set -u -e
 cd /root
 
+# main repository mirror
+REPO="http://mirror.yandex.ru/debian/"
+
 do_build() {
 	export RELEASE=$1 ARCH=$2 BOARD=$3
 	export ROOTFS="/rootfs/$RELEASE-$ARCH"
+	export REPO=$REPO
 	time /root/rootfs/create_rootfs.sh $BOARD
 	rm -f /root/output/rootfs_base_${ARCH}.tar.gz
 	/root/prep.sh

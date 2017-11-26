@@ -4,7 +4,7 @@ set -e
 
 
 #REPO="http://ftp.debian.org/debian"
-REPO="http://mirror.yandex.ru/debian/"
+REPO=${REPO:-"http://mirror.yandex.ru/debian/"} # repo initializer is moved to devenv/build.sh
 RELEASE=${RELEASE:-wheezy}
 
 

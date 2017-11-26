@@ -10,6 +10,10 @@ prepare_chroot
 services_disable
 
 /bin/echo -e 'APT::Get::Assume-Yes "true";\nAPT::Get::force-yes "true";' >$ROOTFS_DIR/etc/apt/apt.conf.d/90forceyes
+
+# add deb-src entry in sources.list
+/bin/echo "deb-src $REPO $RELEASE main" >$ROOTFS_DIR/etc/apt/sources.list
+
 chr apt-get update
 chr apt-get install -y devscripts python-virtualenv equivs build-essential \
     libmosquittopp-dev libmosquitto-dev pkg-config gcc-4.7 g++-4.7 libmodbus-dev \
