@@ -1,5 +1,5 @@
 #!/bin/bash
-set -u -e -x
+set -u -e
 
 ROOTFS=${ROOTFS:-"/rootfs"}
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -55,6 +55,3 @@ cp /etc/profile.d/wbdev_profile.sh $ROOTFS/etc/profile.d/
 
 chr apt-get clean
 rm -rf $ROOTFS/dh-virtualenv
-chr rm -rf /var/lib/apt/lists/
-chr ls -lh /var/lib/apt/lists/ || /bin/true
-ls -lh $ROOTFS/var/lib/apt/lists/ || /bin/true

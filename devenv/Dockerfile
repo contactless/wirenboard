@@ -13,6 +13,7 @@ RUN echo "deb [arch=amd64] http://releases.contactless.ru/stable/stretch stretch
     echo 'deb http://emdebian.org/tools/debian/ jessie main' >/etc/apt/sources.list.d/crosstools.list && \
     curl http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key | apt-key add - && \
     echo 'deb [arch=amd64] http://repo.mosquitto.org/debian stretch main' >/etc/apt/sources.list.d/mosquitto-stretch.list && \
+    apt-key adv --keyserver keys.gnupg.net --recv-keys 9E3E53F19C7DE460 && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AEE07869 && \
     echo 'deb [arch=amd64] http://repo.aptly.info/ squeeze main' >/etc/apt/sources.list.d/aptly.list && \
     curl https://www.aptly.info/pubkey.txt | apt-key add - && \ 
@@ -26,8 +27,7 @@ RUN echo "deb [arch=amd64] http://releases.contactless.ru/stable/stretch stretch
       valgrind libgtest-dev google-mock cmake config-package-dev \
       python-netaddr python-pyparsing liblircclient-dev \
       libusb-dev libusb-1.0-0-dev jq python-dev python-smbus \
-      aptly python-setuptools python3-setuptools liblog4cpp5-dev libpng-dev libqt4-dev bc lzop bison flex kmod \
-      qemu-user-static binfmt-support node-rimraf && \
+      aptly python-setuptools python3-setuptools liblog4cpp5-dev libpng-dev libqt4-dev bc lzop bison flex kmod && \
     apt-get install -y --force-yes proot
 # FIXME: we should not install anything with --force-yes
  
@@ -88,4 +88,3 @@ RUN (cd /usr/src/gmock && cmake . && make && mv libg* /usr/lib/)
 COPY wbdev_profile.sh /etc/profile.d/wbdev_profile.sh
 
 RUN npm install -g bower grunt-cli
-RUN rm -rf /var/lib/apt/lists/*

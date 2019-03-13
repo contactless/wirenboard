@@ -11,7 +11,7 @@ do_build() {
 }
 
 do_build stretch armel 58
-do_build stretch armhf 6x
+do_build stretch armhf 61
 do_build wheezy armel 58
 
 # TBD: run chroot:
