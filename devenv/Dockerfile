@@ -9,8 +9,6 @@ RUN echo "deb [arch=amd64] http://releases.contactless.ru/stable/stretch stretch
     apt-get install -y --allow-unauthenticated gnupg1 curl ca-certificates apt-transport-https && \
     echo "deb [arch=amd64,i386] https://deb.nodesource.com/node_8.x stretch main" > /etc/apt/sources.list.d/nodesource.list && \
     curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    curl http://emdebian.org/tools/debian/emdebian-toolchain-archive.key | apt-key add - && \
-    echo 'deb http://emdebian.org/tools/debian/ jessie main' >/etc/apt/sources.list.d/crosstools.list && \
     curl http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key | apt-key add - && \
     echo 'deb [arch=amd64] http://repo.mosquitto.org/debian stretch main' >/etc/apt/sources.list.d/mosquitto-stretch.list && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AEE07869 && \
@@ -33,7 +31,7 @@ RUN echo "deb [arch=amd64] http://releases.contactless.ru/stable/stretch stretch
  
 # Go environment
 # from https://github.com/docker-library/golang/blob/master/1.5/Dockerfile
-ENV GOLANG_VERSION 1.10
+ENV GOLANG_VERSION 1.12
 ENV GOLANG_DOWNLOAD_URL   https://dl.google.com/go/go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV GOLANG_DOWNLOAD_SHA1  e9275a46508483242feb6200733b6382f127cb43
  
