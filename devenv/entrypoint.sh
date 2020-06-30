@@ -65,11 +65,19 @@ devsudo () {
     # Also we use 'env' here because without it (i.e. when
     # utilizing sudo's own environment passing mechanism)
     # PATH gets overridden in the subshell
+    echo "devsudo\(\) sudo -E -u "$DEV_USER" env HOME="/home/$DEV_USER" PATH= $PATH" $@
     sudo -E -u "$DEV_USER" env HOME="/home/$DEV_USER" PATH="$PATH" "$@"
 }
 
 chu () {
-    devsudo proot -R $ROOTFS -q qemu-arm-static $shell_cmd "$@"
+     echo "chu started with devsudo proot -R $ROOTFS -q qemu-arm-static $shell_cmd "$@""
+     devsudo proot -R $ROOTFS -q qemu-arm-static $shell_cmd "$@"
+}
+
+chu1 () {
+#    devsudo proot -R $ROOTFS -q qemu-arm-static $shell_cmd "$@"
+     echo "chu1 started with chroot $ROOTFS $shell_cmd "$@""
+     devsudo chroot $ROOTFS $shell_cmd "$@"
 }
 
 chr () {
@@ -96,9 +104,11 @@ update_workspace() {
         if [ ! -d "$proj_dir" ]; then
             devsudo mkdir -p "$proj_dir"
             (
+		echo proj_base_dir $proj_base_dir
                 cd "$proj_base_dir"
                 if ! devsudo git clone "$proj_url" "$proj"; then
-                    echo "WARNING: git clone failed for $proj (url: $proj_url)" 1>&2
+
+                    echo "WARNING: git clone failed for $proj \(url: $proj_url\)" 1>&2
                     continue
                 fi
             )
@@ -107,11 +117,11 @@ update_workspace() {
             (
                 cd "$proj_dir"
                 if ! devsudo git checkout "$proj_branch"; then
-                    echo "WARNING: git checkout failed for $proj (url: $proj_url)" 1>&2
+                    echo "WARNING: git checkout failed for $proj \(url: $proj_url\)" 1>&2
                     continue
                 fi
                 if ! devsudo git pull --ff-only origin "$proj_branch"; then
-                    echo "WARNING: git pull --ff-only failed for $proj (url: $proj_url)" 1>&2
+                    echo "WARNING: git pull --ff-only failed for $proj \(url: $proj_url\)" 1>&2
                     continue
                 fi
             )
@@ -157,13 +167,26 @@ case "$cmd" in
     chuser)
         chu "$@"
         ;;
+
+    make1)
+	echo "make started"
+        if [ "$INSTALL_DEPS" = "yes" ]; then
+            chr apt-get update
+            chr mk-build-deps -ir -t "apt-get --force-yes -y"
+        fi
+        chu1 make "$@"
+        ;;
+
     make)
+	echo "make started"
         if [ "$INSTALL_DEPS" = "yes" ]; then
             chr apt-get update
             chr mk-build-deps -ir -t "apt-get --force-yes -y"
         fi
         chu make "$@"
         ;;
+
+
     cdeb)
         if [ "$INSTALL_DEPS" = "yes" ]; then
             chr apt-get update
@@ -172,6 +195,7 @@ case "$cmd" in
         chu dpkg-buildpackage -us -uc "$@"
         ;;
     chroot)
+	echo "chroot started"
         chr "$@"
         ;;
     update-workspace)

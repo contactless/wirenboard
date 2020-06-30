@@ -36,7 +36,8 @@ SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 . "$SCRIPT_DIR/../boards/init_board.sh"
 
-OUTPUT=${ROOTFS}  # FIXME: use ROOTFS var consistently in all scripts 
+  # FIXME: use ROOTFS var consistently in all scripts 
+OUTPUT=${ROOTFS}
 
 
 [[ -e "$OUTPUT" ]] && die "output rootfs folder $OUTPUT already exists, exiting"
@@ -74,8 +75,12 @@ ADD_REPO_RELEASE=${ADD_REPO_RELEASE:-$RELEASE}
 if [[ ${RELEASE} == "wheezy" ]]; then
 	REPO="http://archive.debian.org/debian/"
 else
-	#REPO="http://deb.debian.org/debian"
-	REPO="http://mirror.yandex.ru/debian/"
+	#Brainroot add if for use Makefile variable
+	if [[ -n "$DEBIAN_MIRROR" ]]; then
+		REPO="$DEBIAN_MIRROR"
+	else
+		REPO="http://mirror.yandex.ru/debian/"
+	fi
 fi
 
 setup_additional_repos() {
@@ -119,7 +124,12 @@ install_contactless_repo() {
         	echo "deb http://archive.debian.org/debian ${RELEASE}-backports main" > ${APT_LIST_TMP_FNAME}
 	        echo "deb http://releases.contactless.ru/ ${RELEASE} main"  >> ${APT_LIST_TMP_FNAME}
 	elif [[ ${RELEASE} == "stretch" ]]; then
-		echo "deb http://releases.contactless.ru/stable/${RELEASE} ${RELEASE} main" >  ${APT_LIST_TMP_FNAME}
+	  	#Brainroot add if for use Makefile variable
+		if [[ -n "$WIRENBOARD_MIRROR" && -n "$TARGET_VERSION" ]]; then
+			echo deb $WIRENBOARD_MIRROR/$TARGET_VERSION $TARGET_VERSION main >  ${APT_LIST_TMP_FNAME}
+		else
+			echo "deb http://releases.contactless.ru/stable/${RELEASE} ${RELEASE} main" >  ${APT_LIST_TMP_FNAME}
+		fi
 	fi
 
 	if [[ ${RELEASE} == "stretch" ]]; then
@@ -156,6 +166,21 @@ if [[ -e "$ROOTFS_BASE_TARBALL" ]]; then
 else
 	echo "No $ROOTFS_BASE_TARBALL found, will create one for later use"
 	#~ exit
+
+	
+	mkdir -p ${OUTPUT}/usr/bin
+	cp /usr/bin/qemu-arm-static ${OUTPUT}/usr/bin ||
+	cp /usr/bin/qemu-arm ${OUTPUT}/usr/bin
+	echo "modprobe binfmt_misc"
+	modprobe binfmt_misc || true
+
+echo debootstrap \
+		--foreign \
+		--verbose \
+		--arch $ARCH \
+		--variant=minbase \
+		${RELEASE} ${OUTPUT} ${REPO}
+
 	debootstrap \
 		--foreign \
 		--verbose \
@@ -163,10 +188,7 @@ else
 		--variant=minbase \
 		${RELEASE} ${OUTPUT} ${REPO}
 
-	echo "Copy qemu to rootfs"
-	cp /usr/bin/qemu-arm-static ${OUTPUT}/usr/bin ||
-	cp /usr/bin/qemu-arm ${OUTPUT}/usr/bin
-	modprobe binfmt_misc || true
+
 
 	# kludge to fix ssmtp configure that breaks when FQDN is unknown
 	echo "127.0.0.1       wirenboard localhost" > ${OUTPUT}/etc/hosts
@@ -335,7 +357,7 @@ install_wb5_packages() {
     fi
 
     if [[ ${RELEASE} == "stretch" ]]; then
-	chr_apt_install --force-yes libateccssl1.1 knxd knxd-tools wb-knxd-config wb-mqtt-knx
+	chr_apt_install --force-yes libateccssl1.1
     fi
     chr_apt_install "${pkgs[@]}"
 }
@@ -374,5 +396,9 @@ sed "/$(hostname)/d" -i "`readlink -f ${OUTPUT}/etc/hosts`"
 
 # (re-)start mosquitto on host
 service mosquitto start || /bin/true
+
+#/root/wirenboard/devenv/entrypoint.sh make
+#mkdir -p /rootfs/stretch-armhf/root/wbdev/go/src/github.com/
+#ln -s /root/wbdev/go/src/github.com/contactless/ /rootfs/stretch-armhf/root/wbdev/go/src/github.com/contactless
 
 exit 0

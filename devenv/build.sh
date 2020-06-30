@@ -10,8 +10,8 @@ do_build() {
 	/root/prep.sh
 }
 
-do_build stretch armel 58
-do_build stretch armhf 6x
+do_build $TARGET_VERSION armel 58
+do_build $TARGET_VERSION armhf 6x
 do_build wheezy armel 58
 
 # TBD: run chroot:

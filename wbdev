@@ -1,4 +1,7 @@
 #!/bin/bash
+
+DEBUG=0
+
 DOCKER_TTY_OPTS=-i
 if [ -t 0 ]; then
     DOCKER_TTY_OPTS=-it
@@ -7,8 +10,9 @@ ssh_opts=
 if [ -n "$SSH_AUTH_SOCK" ]; then
     ssh_opts="-e SSH_AUTH_SOCK=/ssh-agent -v $SSH_AUTH_SOCK:/ssh-agent"
 fi
-ROOTFS="/rootfs/stretch-armel"
-TARGET_ARCH="armel"
+#Change default to armhf
+ROOTFS="/rootfs/stretch-armhf"
+TARGET_ARCH="armhf"
 
 case "$WBDEV_TARGET" in
 wheezy-armel)
@@ -24,11 +28,12 @@ stretch-armel|wb5)
     TARGET_ARCH="armel"
     ;;
 *)
-    echo "Warning: WBDEV_TARGET is not set or not supported, defaulting to stretch-armel (aka wb5)"
+    echo "Warning: WBDEV_TARGET is not set or not supported, defaulting to stretch-armhf (aka wb6)"
     ;;
 esac
 
-IMAGE=${WBDEV_IMAGE:-contactless/devenv:latest}
+#IMAGE=${WBDEV_IMAGE:-contactless/devenv:latest}
+IMAGE=${WBDEV_IMAGE:-contactless/devenv-dev:latest}
 
 if [[ $OSTYPE == darwin* ]]
 then
@@ -41,6 +46,35 @@ PREFIX="$VM_HOME/wbdev/go/src/github.com/contactless"
 
 INSTALL_DEPS=${WBDEV_INSTALL_DEPS:-no}
 
+if [[ "$DEBUG" > 0 ]]
+then
+    echo DEV_UID=$UID
+    echo DEV_USER=$USER
+    echo DEV_DIR="$PREFIX/${PWD##*/}"
+    echo DEV_TERM="$TERM".
+    echo ROOTFS="$ROOTFS"
+    echo TARGET_ARCH="$TARGET_ARCH".
+    echo INSTALL_DEPS="$INSTALL_DEPS"
+    echo v $HOME:$VM_HOME
+    echo v ${PWD%/*}:$PREFIX
+
+    echo run $DOCKER_TTY_OPTS --privileged --rm \
+       -e DEV_UID=$UID \
+       -e DEV_USER=$USER \
+       -e DEV_DIR="$PREFIX/${PWD##*/}" \
+       -e DEV_TERM="$TERM" \
+       -e ROOTFS="$ROOTFS" \
+       -e TARGET_ARCH="$TARGET_ARCH" \
+       -e INSTALL_DEPS="$INSTALL_DEPS" \
+       -v $HOME:$VM_HOME \
+       -v ${PWD%/*}:$PREFIX \
+       $ssh_opts \
+       -h wbdevenv \
+       $IMAGE \
+       "$@"
+fi
+
+echo "Docker run."
 docker run $DOCKER_TTY_OPTS --privileged --rm \
        -e DEV_UID=$UID \
        -e DEV_USER=$USER \
