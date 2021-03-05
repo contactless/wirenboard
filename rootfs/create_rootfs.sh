@@ -324,11 +324,8 @@ EOF
 
 install_wb5_packages() {
     pkgs=(
-		wb-homa-ism-radio wb-mqtt-serial wb-homa-w1 wb-homa-gpio wb-mqtt-db \
-		wb-homa-adc wb-rules wb-rules-system netplug hostapd bluez can-utils \
-		wb-mqtt-dac wb-mqtt-homeui wb-hwconf-manager wb-test-suite u-boot-tools \
-		wb-dt-overlays wb-mqtt-mbgate wb-mqtt-db-cli cron bluez-hcidump wb-daemon-watchdogs \
-		wb-mcu-fw-flasher wb-mcu-fw-updater
+        wb-suite netplug hostapd bluez can-utils u-boot-tools \
+		cron bluez-hcidump
     )
 
     if [[ ${RELEASE} == "wheezy" ]]; then
@@ -336,7 +333,7 @@ install_wb5_packages() {
     fi
 
     if [[ ${RELEASE} == "stretch" ]]; then
-	chr_apt_install --force-yes libateccssl1.1 knxd knxd-tools wb-knxd-config wb-mqtt-knx
+	chr_apt_install --force-yes libateccssl1.1 knxd knxd-tools
     fi
     chr_apt_install "${pkgs[@]}"
 }
