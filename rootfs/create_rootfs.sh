@@ -86,7 +86,7 @@ setup_additional_repos() {
 	echo > $ADD_REPO_PIN_FILE
     for repo in "${@}"; do
         echo "=> Setup additional repository $repo..."
-        echo "deb $repo $ADD_REPO_RELEASE main" >> $ADD_REPO_FILE
+        echo "deb [trusted=yes] $repo $ADD_REPO_RELEASE main" >> $ADD_REPO_FILE
         (wget $repo/repo.gpg.key -O- | chr apt-key add - ) ||
             echo "Warning: can't import repo.gpg.key for repo $repo"
 
@@ -97,7 +97,7 @@ setup_additional_repos() {
 
 		echo "Package: *" >> ${ADD_REPO_PIN_FILE}
 		echo "Pin: release o=$o, l=$l" >> ${ADD_REPO_PIN_FILE}
-		echo "Pin-Priority: 990" >> ${ADD_REPO_PIN_FILE}
+		echo "Pin-Priority: 999" >> ${ADD_REPO_PIN_FILE}
 		echo >> ${ADD_REPO_PIN_FILE} # mandatory newline
     done
 
