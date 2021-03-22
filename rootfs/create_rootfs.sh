@@ -35,7 +35,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$SCRIPT_DIR/../boards/init_board.sh"
 
 OUTPUT=${ROOTFS}  # FIXME: use ROOTFS var consistently in all scripts 
-WB_TARGET="${REPO_PLATFORM}/${DEBIAN_RELEASE}"
+WB_TARGET=${WB_TARGET:-"${REPO_PLATFORM}/${DEBIAN_RELEASE}"}
 
 [[ -e "$OUTPUT" ]] && die "output rootfs folder $OUTPUT already exists, exiting"
 
@@ -55,11 +55,13 @@ mkdir -p $OUTPUT
 export LC_ALL=C
 
 
+WB_TARGET_FOR_FILENAME=`echo $WB_TARGET | sed 's#/#_#'`
+
 # use alternative rootfs tarball for experimental builds (with additional repos)
 if $USE_EXPERIMENTAL; then
-    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${DEBIAN_RELEASE}_${ARCH}_dev.tar.gz"
+    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${WB_TARGET_FOR_FILENAME}_${ARCH}_dev.tar.gz"
 else
-    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${DEBIAN_RELEASE}_${ARCH}.tar.gz"
+    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${WB_TARGET_FOR_FILENAME}_${ARCH}.tar.gz"
 fi
 
 ROOTFS_DIR=$OUTPUT
