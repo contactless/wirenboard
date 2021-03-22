@@ -17,6 +17,16 @@ SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 	exit 3
 }
 
+. $ROOTFS/usr/lib/wb-release || {
+    echo "Unable to get release info"
+    exit 4
+}
+
+. $ROOTFS/usr/lib/os-release || {
+    echo "Unable to get Debian version info"
+    exit 4
+}
+
 VERSION=`cat "$ROOTFS/etc/wb-fw-version"` || {
 	echo "Unable to get firmware version"
 	exit 4
@@ -25,17 +35,21 @@ VERSION=`cat "$ROOTFS/etc/wb-fw-version"` || {
 echo "Board:      $BOARD"
 echo "RootFS:     $ROOTFS"
 echo "FW version: $VERSION"
+echo "Debian:     $VERSION_CODENAME"
+echo "Release:    $RELEASE_NAME"
+echo "Target:     $TARGET"
 
 if [ ! -z "$2" ]; then
     VERSION=$2
     echo "FW version overriden: $VERSION"
 fi
 
+FULL_VERSION="${VERSION}_${RELEASE_NAME}_${VERSION_CODENAME}_${TARGET}"
 
-OUT_DIR="${IMAGES_DIR}/${VERSION}"
+OUT_DIR=${OUT_DIR:-"${IMAGES_DIR}/${VERSION}"}
 mkdir -p ${OUT_DIR}
-IMG_NAME="${OUT_DIR}/${VERSION}_emmc_wb${BOARD}.img"
-WEBUPD_NAME="${OUT_DIR}/${VERSION}_webupd_wb${BOARD}.fit"
+IMG_NAME="${OUT_DIR}/${FULL_VERSION}_emmc_wb${BOARD}.img"
+WEBUPD_NAME="${OUT_DIR}/${FULL_VERSION}_webupd_wb${BOARD}.fit"
 
 if  [ -n "$MAKE_IMG" ]; then
     echo "Create IMG"
