@@ -3,8 +3,11 @@ set -e
 #set -x
 
 ROOTFS_DIR=$ROOTFS
-RELEASE=${RELEASE:-stretch}
+DEBIAN_RELEASE=${DEBIAN_RELEASE:-stretch}
 
+WB_REPO=${WB_REPO:-deb.wirenboard.com}
+WB_TEMP_REPO=${WB_TEMP_REPO:-false}
+WB_RELEASE=${WB_RELEASE:-stable}
 
 if [[ ( "$#" < 1)  ]]
 then
@@ -14,7 +17,7 @@ then
   echo "How to attach additional repos:"
   echo -e "\t$0 <BOARD> \"http://localhost:8086/\""
   echo -e "Additional repo must have a public key file on http://<hostname>/repo.gpg.key"
-  echo -e "In process, repo names will be expanded as \"deb <repo_address> ${RELEASE} main\""
+  echo -e "In process, repo names will be expanded as \"deb <repo_address> ${DEBIAN_RELEASE} main\""
   exit 1
 fi
 
@@ -26,18 +29,13 @@ if [[ $# -gt 1 ]]; then
 fi
 
 BOARD=$1
-if [[ $BOARD = 6* ]]; then
-    ARCH="armhf"
-else
-    ARCH="armel"
-fi
 SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "${SCRIPT_DIR}"/rootfs_env.sh
 
 . "$SCRIPT_DIR/../boards/init_board.sh"
 
 OUTPUT=${ROOTFS}  # FIXME: use ROOTFS var consistently in all scripts 
-
+WB_TARGET="${REPO_PLATFORM}/${DEBIAN_RELEASE}"
 
 [[ -e "$OUTPUT" ]] && die "output rootfs folder $OUTPUT already exists, exiting"
 
@@ -59,9 +57,9 @@ export LC_ALL=C
 
 # use alternative rootfs tarball for experimental builds (with additional repos)
 if $USE_EXPERIMENTAL; then
-    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${RELEASE}_${ARCH}_dev.tar.gz"
+    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${DEBIAN_RELEASE}_${ARCH}_dev.tar.gz"
 else
-    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${RELEASE}_${ARCH}.tar.gz"
+    ROOTFS_BASE_TARBALL="${WORK_DIR}/rootfs_base_${DEBIAN_RELEASE}_${ARCH}.tar.gz"
 fi
 
 ROOTFS_DIR=$OUTPUT
@@ -69,9 +67,9 @@ ROOTFS_DIR=$OUTPUT
 ADD_REPO_FILE=$OUTPUT/etc/apt/sources.list.d/additional.list
 ADD_REPO_PIN_FILE=$OUTPUT/etc/apt/preferences.d/000gadditional
 
-ADD_REPO_RELEASE=${ADD_REPO_RELEASE:-$RELEASE}
+ADD_REPO_RELEASE=${ADD_REPO_RELEASE:-$DEBIAN_RELEASE}
 
-if [[ ${RELEASE} == "wheezy" ]]; then
+if [[ ${DEBIAN_RELEASE} == "wheezy" ]]; then
 	REPO="http://archive.debian.org/debian/"
 else
 	#REPO="http://deb.debian.org/debian"
@@ -86,7 +84,7 @@ setup_additional_repos() {
 	echo > $ADD_REPO_PIN_FILE
     for repo in "${@}"; do
         echo "=> Setup additional repository $repo..."
-        echo "deb [trusted=yes] $repo $ADD_REPO_RELEASE main" >> $ADD_REPO_FILE
+        echo "deb $repo $ADD_REPO_RELEASE main" >> $ADD_REPO_FILE
         (wget $repo/repo.gpg.key -O- | chr apt-key add - ) ||
             echo "Warning: can't import repo.gpg.key for repo $repo"
 
@@ -107,22 +105,22 @@ setup_additional_repos() {
 	cat  $ADD_REPO_PIN_FILE
 	
 }
-APT_LIST_TMP_FNAME="${OUTPUT}/etc/apt/sources.list.d/wb-install.list"
-APT_PIN_TMP_FNAME="${OUTPUT}/etc/apt/preferences.d/wb-install"
+APT_LIST_TMP_FNAME="${OUTPUT}/etc/apt/sources.list.d/wb-repo-${WB_RELEASE}.list"
+APT_PIN_TMP_FNAME="${OUTPUT}/etc/apt/preferences.d/90wb-release-${WB_RELEASE}"
 
 
 install_contactless_repo() {
     rm -f ${APT_LIST_TMP_FNAME}
 
 	echo "Install initial repos"
-	if [[ ${RELEASE} == "wheezy" ]]; then
+	if [[ ${DEBIAN_RELEASE} == "wheezy" ]]; then
         	echo "deb http://archive.debian.org/debian ${RELEASE}-backports main" > ${APT_LIST_TMP_FNAME}
 	        echo "deb http://releases.contactless.ru/ ${RELEASE} main"  >> ${APT_LIST_TMP_FNAME}
-	elif [[ ${RELEASE} == "stretch" ]]; then
-		echo "deb http://releases.contactless.ru/stable/${RELEASE} ${RELEASE} main" >  ${APT_LIST_TMP_FNAME}
-	fi
+    else
+        echo "deb http://$WB_REPO/$WB_TARGET $WB_RELEASE main" >  ${APT_LIST_TMP_FNAME}
+    fi
 
-	if [[ ${RELEASE} == "stretch" ]]; then
+    if [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
 		echo "Install gnupg"
 		chr apt-get update
 		chr apt-get install -y gnupg1
@@ -161,7 +159,7 @@ else
 		--verbose \
 		--arch $ARCH \
 		--variant=minbase \
-		${RELEASE} ${OUTPUT} ${REPO}
+		${DEBIAN_RELEASE} ${OUTPUT} ${REPO}
 
 	echo "Copy qemu to rootfs"
 	cp /usr/bin/qemu-arm-static ${OUTPUT}/usr/bin ||
@@ -205,11 +203,11 @@ EOM
 	chr /bin/sh -c "echo root:wirenboard | chpasswd"
 
         echo "Install primary sources.list"
-        echo "deb ${REPO} ${RELEASE} main" >${OUTPUT}/etc/apt/sources.list
+        echo "deb ${REPO} ${DEBIAN_RELEASE} main" >${OUTPUT}/etc/apt/sources.list
 
-		if [[ ${RELEASE} == "stretch" ]]; then
-			echo "deb ${REPO} ${RELEASE}-updates main" >>${OUTPUT}/etc/apt/sources.list
-			echo "deb http://security.debian.org ${RELEASE}/updates main" >>${OUTPUT}/etc/apt/sources.list
+		if [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
+			echo "deb ${REPO} ${DEBIAN_RELEASE}-updates main" >>${OUTPUT}/etc/apt/sources.list
+			echo "deb http://security.debian.org ${DEBIAN_RELEASE}/updates main" >>${OUTPUT}/etc/apt/sources.list
 		fi
 
 
@@ -217,7 +215,7 @@ EOM
     # apt pin
     echo "Set temporary APT PIN" 
     echo "Package: *" > ${APT_PIN_TMP_FNAME}
-    echo "Pin: origin releases.contactless.ru" >> ${APT_PIN_TMP_FNAME}
+    echo "Pin: release o=wirenboard" >> ${APT_PIN_TMP_FNAME}
     echo "Pin-Priority: 990" >> ${APT_PIN_TMP_FNAME}
 
        
@@ -253,11 +251,11 @@ EOM
         python3-minimal unzip minicom iw ppp libmodbus5 \
         python-smbus ssmtp moreutils liblog4cpp5-dev firmware-realtek
 
-	if [[ ${RELEASE} == "wheezy" ]]; then
+	if [[ ${DEBIAN_RELEASE} == "wheezy" ]]; then
         # not present at stretch
         chr_apt_install --force-yes console-tools module-init-tools
         chr_apt_install --force-yes liblog4cpp5
-	elif [[ ${RELEASE} == "stretch" ]]; then
+	elif [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
         chr_apt_install --force-yes liblog4cpp5v5 logrotate
         fi
 
@@ -281,11 +279,6 @@ chr_apt_install libnss-mdns kmod
 echo "Install wb-configs"
 chr_apt_install wb-configs
 
-echo "remove installation time apt pinning and lists"
-rm ${APT_LIST_TMP_FNAME}
-rm ${APT_PIN_TMP_FNAME}
-chr_apt_update
-
 echo "Install packages from contactless repo"
 pkgs=(
     cmux hubpower python-wb-io modbus-utils serial-tool busybox
@@ -295,7 +288,7 @@ pkgs=(
 
 chr_apt_update
     
-if [[ ${RELEASE} == "stretch" ]]; then
+if [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
     chr_apt_install libssl1.0-dev systemd-sysv
 fi
 
@@ -328,11 +321,11 @@ install_wb5_packages() {
 		cron bluez-hcidump
     )
 
-    if [[ ${RELEASE} == "wheezy" ]]; then
+    if [[ ${DEBIAN_RELEASE} == "wheezy" ]]; then
 	chr_apt_install --force-yes lirc-scripts
     fi
 
-    if [[ ${RELEASE} == "stretch" ]]; then
+    if [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
 	chr_apt_install --force-yes libateccssl1.1 knxd knxd-tools
     fi
     chr_apt_install "${pkgs[@]}"
@@ -358,7 +351,7 @@ chr apt-get clean
 rm -rf ${OUTPUT}/run/* ${OUTPUT}/var/cache/apt/archives/* ${OUTPUT}/var/lib/apt/lists/*
 
 rm -f ${OUTPUT}/etc/apt/sources.list.d/local.list
-if [[ ${RELEASE} == "stretch" ]]; then
+if [[ ${DEBIAN_RELEASE} == "stretch" ]]; then
 	rm -f ${OUTPUT}/etc/apt/sources.list
 fi
 
@@ -369,6 +362,13 @@ rm -f ${OUTPUT}/etc/ssh/ssh_host_* || /bin/true
 # NOTE: always use readlink -f or realpath for inline Perl stuff,
 # because it will not preserve symlinks
 sed "/$(hostname)/d" -i "`readlink -f ${OUTPUT}/etc/hosts`"
+
+if $WB_TEMP_REPO; then
+    echo "remove installation time apt pinning and lists"
+    rm ${APT_LIST_TMP_FNAME}
+    rm ${APT_PIN_TMP_FNAME}
+    chr_apt_update
+fi
 
 # (re-)start mosquitto on host
 service mosquitto start || /bin/true

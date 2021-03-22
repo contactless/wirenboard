@@ -29,6 +29,8 @@ TEMPDIR=`mktemp -d /tmp/wb-image-XXXXX`
 
 APTLY_PUBLISH_DIR=$TEMPDIR/publish/
 SERVER_PID_FILE=$TEMPDIR/server.pid
+SERVER_LOGS_STDERR=$TEMPDIR/server.stderr
+SERVER_LOGS_STDOUT=$TEMPDIR/server.stdout
 APTLY_CONFIG_FILE=$TEMPDIR/aptly.conf
 APTLY_PUBLISH_ENDPOINT=build
 
@@ -83,11 +85,11 @@ python3 -m wbci.repo -c $APTLY_CONFIG_FILE deploy -e filesystem:$APTLY_PUBLISH_E
 
 HTTP_ADDRESS="$HTTP_BIND:$HTTP_SERVER_PORT"
 echo "[BUILD_RELEASE_IMAGE] Launching web server in background (serve address $HTTP_ADDRESS)" >&2
-python3 -m http.server -d $APTLY_PUBLISH_DIR --bind $HTTP_BIND $HTTP_SERVER_PORT & PID=$!
+python3 -m http.server -d $APTLY_PUBLISH_DIR --bind $HTTP_BIND $HTTP_SERVER_PORT >$SERVER_LOGS_STDOUT 2>$SERVER_LOGS_STDERR & PID=$!
 echo $PID > $SERVER_PID_FILE
 
 echo "[BUILD_RELEASE_IMAGE] Building rootfs" >&2
-ADD_REPO_RELEASE=$RELEASES_SUITE ../rootfs/create_rootfs.sh $BOARD "http://$HTTP_ADDRESS/$RELEASE_TARGET"
+WB_REPO=$HTTP_ADDRESS WB_RELEASE=$RELEASES_SUITE WB_TEMP_REPO=true ../rootfs/create_rootfs.sh $BOARD
 
 echo "[BUILD_RELEASE_IMAGE] Building image" >&2
 ../image/create_images.sh $BOARD
