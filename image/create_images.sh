@@ -44,7 +44,8 @@ if [ ! -z "$2" ]; then
     echo "FW version overriden: $VERSION"
 fi
 
-FULL_VERSION="${VERSION}_${RELEASE_NAME}_${TARGET}"
+TARGET_FOR_FILENAME=`echo $TARGET | sed 's#/#-#g'`
+FULL_VERSION="${VERSION}_${RELEASE_NAME}_${TARGET_FOR_FILENAME}"
 
 OUT_DIR=${OUT_DIR:-"${IMAGES_DIR}/${VERSION}"}
 mkdir -p ${OUT_DIR}
