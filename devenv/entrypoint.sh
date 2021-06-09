@@ -154,6 +154,37 @@ update_workspace() {
     done
 }
 
+die() {
+    echo "$@" >&2
+    exit 1
+}
+
+platform_has_suite() {
+    local SUITE=$1
+    local URL="http://deb.wirenboard.com/${WB_REPO_PLATFORM}/dists/${SUITE}/Release"
+    local HTTP_CODE
+    echo "Checking $URL..."
+    HTTP_CODE=`curl --silent --head --output /dev/null --write-out '%{http_code}\n' $URL`
+    local CURL_STATUS=$?
+
+    if [[ "$CURL_STATUS" != "0" ]]; then
+        die "Failed to retrieve $URL, curl returned $CURL_STATUS"
+    fi
+
+    # logic is the following:
+    #  - code=404 -> no such suite
+    #  - 200<=code<400 -> ok
+    #  - else -> failure
+    echo "Server returned $HTTP_CODE"
+    if [[ $HTTP_CODE -eq 404 ]]; then
+        return 1  # no such suite
+    elif [[ $HTTP_CODE -ge 200 ]] && [[ $HTTP_CODE -lt 400 ]]; then
+        return 0  # suite found
+    else
+        die "Failed to retrieve $URL, server returned $HTTP_CODE"
+    fi
+}
+
 sbuild_buildpackage() {
     local ARCH=$1
     shift
@@ -163,7 +194,12 @@ sbuild_buildpackage() {
 
     local UNSTABLE_REPO_SPEC=""
     if [ -n "$WBDEV_USE_UNSTABLE_DEPS" ]; then
-        UNSTABLE_REPO_SPEC="deb [arch=armhf,armel,amd64] http://deb.wirenboard.com/${WB_REPO_PLATFORM} unstable main"
+        if platform_has_suite unstable; then
+            echo "Platform ${WB_REPO_PLATFORM} has unstable suite, add it to build"
+            UNSTABLE_REPO_SPEC="deb [arch=armhf,armel,amd64] http://deb.wirenboard.com/${WB_REPO_PLATFORM} unstable main"
+        else
+            echo "Platform ${WB_REPO_PLATFORM} doesn't have unstable suite"
+        fi
     fi
 
     export _DEB_BUILD_OPTIONS=${DEB_BUILD_OPTIONS}

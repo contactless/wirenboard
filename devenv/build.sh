@@ -30,22 +30,27 @@ do_build_sbuild_env() {
 
     cat <<EOF >${ROOTFS}/etc/apt/preferences.d/wb-releases
 Package: *
-Pin: o=wirenboard a=pool
+Pin: release o=wirenboard a=pool
 Pin-Priority: 10
 
 Package: *
-Pin: o=wirenboard a=unstable
+Pin: release o=wirenboard a=unstable
 Pin-Priority: 990
 
 Package: *
-Pin: o=wirenboard
+Pin: release o=wirenboard
 Pin-Priority: 991
+EOF
+    cat <<EOF >${ROOTFS}/etc/apt/preferences.d/nodejs
+Package: node* npm libuv1*
+Pin: release a=stretch-backports
+Pin-Priority: 510
 EOF
 
 	schroot -c ${CHROOT_NAME} --directory=/ -- apt-get update
 
 	#install multi-arch common build dependencies 
-	schroot -c ${CHROOT_NAME} --directory=/ -- apt-get -y install libssl-dev:armhf linux-libc-dev:armhf libc6-dev:armhf libc-ares2:armhf libssl-dev:armel linux-libc-dev:armel libc6-dev:armel libc-ares2:armel golang-go
+	schroot -c ${CHROOT_NAME} --directory=/ -- apt-get -y install libssl-dev:armhf linux-libc-dev:armhf libc6-dev:armhf libc-ares2:armhf libssl-dev:armel linux-libc-dev:armel libc6-dev:armel libc-ares2:armel golang-go node-rimraf
 
 	#virtualization support packages
 	cp /usr/bin/qemu-arm-static ${ROOTFS}/usr/bin/

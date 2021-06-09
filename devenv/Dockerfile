@@ -5,10 +5,10 @@ ENV DEBIAN_FRONTEND noninteractive
  
 RUN echo "deb [arch=amd64] http://deb.wirenboard.com/dev-tools stable main" > /etc/apt/sources.list.d/wirenboard-dev-tools.list && \
     sed -e "s/httpredir.debian.org/mirror.yandex.ru/g" -i /etc/apt/sources.list && \
+    echo "deb [arch=amd64] http://deb.debian.org/debian stretch-backports main" > /etc/apt/sources.list.d/stretch-backports.list && \
+    echo -n "Package: node* npm libuv1*\nPin: release a=stretch-backports\nPin-Priority: 510" > /etc/apt/preferences.d/01nodejs && \
     apt-get update && \
     apt-get install -y --allow-unauthenticated gnupg1 curl ca-certificates apt-transport-https contactless-keyring && \
-    echo "deb [arch=amd64,i386] https://deb.nodesource.com/node_8.x stretch main" > /etc/apt/sources.list.d/nodesource.list && \
-    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
     curl http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key | apt-key add - && \
     echo 'deb [arch=amd64] http://repo.mosquitto.org/debian stretch main' >/etc/apt/sources.list.d/mosquitto-stretch.list && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AEE07869 && \
@@ -17,7 +17,7 @@ RUN echo "deb [arch=amd64] http://deb.wirenboard.com/dev-tools stable main" > /e
     apt-get update && \
     apt-get install -y --force-yes git mercurial curl wget debootstrap \
       build-essential pkg-config debhelper    \
-      nodejs bash-completion nano gcc-arm-linux-gnueabi gcc-arm-linux-gnueabihf sudo locales \
+      nodejs npm bash-completion nano gcc-arm-linux-gnueabi gcc-arm-linux-gnueabihf sudo locales \
       devscripts python-virtualenv git equivs \
       libmosquittopp-dev libmosquitto-dev pkg-config gcc g++ libmodbus-dev \
       libcurl4-gnutls-dev libsqlite3-dev libjsoncpp-dev \
